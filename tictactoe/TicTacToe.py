@@ -423,7 +423,7 @@ class TicTacToeGame:
         elif mode == "P2QLearnBotTrain":
             q_agent = QLearningAgent(epsilon=0.1, alpha=0.5, gamma=0.9)
             pygame.display.set_caption('TIC TAC TOE - Player (o) vs Q-learning (x)')
-            q_table_file = 'q_tableBot1.csv'
+            q_table_file = 'tictactoe/q_tableBot1.csv'
             if not os.path.exists(q_table_file):
                 training_rewards, validation_rewards = q_agent.train_q_learning_bot(TicTacToeGame, num_episodes=1000, q_table_file=q_table_file)
                 self.plot_learning_curves(training_rewards, validation_rewards)
@@ -485,7 +485,7 @@ class TicTacToeGame:
         elif mode == "P2QLearning":
             q_agent = QLearningAgent(epsilon=0.1, alpha=0.5, gamma=0.9)
             pygame.display.set_caption('TIC TAC TOE - Player (o) vs Q-learning (x)')
-            q_table_file = 'q_table.csv'
+            q_table_file = 'tictactoe/q_table.csv'
             if not os.path.exists(q_table_file):
                 training_rewards, validation_rewards = q_agent.train_q_learning_agent(TicTacToeGame, num_episodes=1000, q_table_file=q_table_file)
                 self.plot_learning_curves(training_rewards, validation_rewards)
@@ -538,7 +538,7 @@ class TicTacToeGame:
 
                 pygame.display.update()
                 if self.game_over:
-                    pygame.time.wait(3000)
+                    pygame.time.wait(2000)
 
 ###########################
 ###########################
