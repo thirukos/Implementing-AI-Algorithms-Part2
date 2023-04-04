@@ -11,6 +11,9 @@ class ConnectFourMinimax(ConnectFour):
         self.max_depth = max_depth
 
     def get_bot_move(self):
+        valid_cols = [col for col in range(self.COLUMN_COUNT) if self.is_valid_location(col).any()]
+        if not valid_cols:
+            return None
         _, col = self.minimax(self.max_depth, -np.inf, np.inf, True)
         return col
 
