@@ -8,6 +8,7 @@ import random
 # import csv
 from qlearning import QLearningAgent
 import os
+import matplotlib.pyplot as plt
 
 class TicTacToeGame:
     def __init__(self, screen_size=(600, 600), show_display=True):
@@ -175,6 +176,18 @@ class TicTacToeGame:
             pygame.display.set_caption('TIC TAC TOE')
             self.screen.fill(self.bg_color)
             self.draw_lines()
+
+    def plot_learning_curves(self, training_rewards, validation_rewards):
+        plt.figure()
+        plt.plot(training_rewards, label='Training')
+        plt.plot(validation_rewards, label='Validation')
+        plt.xlabel('Episodes')
+        plt.ylabel('Rewards')
+        plt.title('Learning Curves')
+        plt.legend()
+        # plt.show()
+        plt.savefig('training vs validation')
+
 
 ### Default Opponent BOT ###
     def tictactoe_Bot(self):
@@ -353,6 +366,10 @@ class TicTacToeGame:
                 if self.game_over:
                     pygame.time.wait(2000)
 
+###########################
+###########################
+###########################
+
         elif mode == "B2MiniMax":
             pygame.display.set_caption('TIC TAC TOE - Minimax (o) vs Bot (x)')
             move_delay = 1000
@@ -397,14 +414,19 @@ class TicTacToeGame:
                 if self.game_over:
                     pygame.time.wait(2000)
 
-        elif mode == "B2QLearning":
-            pass
-        elif mode == "P2QLearning":
+###########################
+###########################
+###########################
+# q_tableBot1.csv - trained with epsilon=0.1, alpha=0.5, gamma=0.9, suboptimal performance
+# q_tableBot2.csv - trained with epsilon=0.1, alpha=0.5, gamma=0.5, suboptimal performace
+
+        elif mode == "P2QLearnBotTrain":
             q_agent = QLearningAgent(epsilon=0.1, alpha=0.5, gamma=0.9)
             pygame.display.set_caption('TIC TAC TOE - Player (o) vs Q-learning (x)')
-            q_table_file = 'q_table.csv'
+            q_table_file = 'q_tableBot1.csv'
             if not os.path.exists(q_table_file):
-                q_agent.train_q_learning_agent(TicTacToeGame, num_episodes=1000, q_table_file='q_table.csv')
+                training_rewards, validation_rewards = q_agent.train_q_learning_bot(TicTacToeGame, num_episodes=1000, q_table_file=q_table_file)
+                self.plot_learning_curves(training_rewards, validation_rewards)
             else:
                 q_agent.load_q_table(q_table_file)
             
@@ -456,6 +478,72 @@ class TicTacToeGame:
                 if self.game_over:
                     pygame.time.wait(3000)
 
+###########################
+###########################
+###########################
+
+        elif mode == "P2QLearning":
+            q_agent = QLearningAgent(epsilon=0.1, alpha=0.5, gamma=0.9)
+            pygame.display.set_caption('TIC TAC TOE - Player (o) vs Q-learning (x)')
+            q_table_file = 'q_table.csv'
+            if not os.path.exists(q_table_file):
+                training_rewards, validation_rewards = q_agent.train_q_learning_agent(TicTacToeGame, num_episodes=1000, q_table_file=q_table_file)
+                self.plot_learning_curves(training_rewards, validation_rewards)
+            else:
+                q_agent.load_q_table(q_table_file)
+            
+            self.reset_game()
+            while not self.game_over:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        sys.exit()
+
+                    if self.player == 1:
+                        if event.type == pygame.MOUSEBUTTONDOWN and not self.game_over:
+                            mouse_x = event.pos[0]
+                            mouse_y = event.pos[1]
+
+                            clicked_row = int(mouse_y // self.square_size)
+                            clicked_col = int(mouse_x // self.square_size)
+
+                            if self.available_square(clicked_row, clicked_col):
+                                self.mark_square(clicked_row, clicked_col)
+                                if self.check_win():
+                                    self.game_over = True
+                                elif self.is_board_full():
+                                    self.restart()
+                                self.player = self.player % 2 + 1
+                                self.draw_figures()
+                                
+
+                    elif self.player == 2 and not self.game_over:
+                        state = q_agent.get_state(board = self.board)
+                        available_actions = q_agent.get_available_actions(board = self.board)
+                        action = q_agent.choose_action(state = state, available_actions = available_actions)
+                        row, col = q_agent.action_to_coordinates(action = action)
+
+                        if self.available_square(row, col):
+                            self.mark_square(row, col)
+                            if self.check_win():
+                                self.game_over = True
+                            elif self.is_board_full():
+                                self.restart()
+                            self.player = self.player % 2 + 1
+                            self.draw_figures()
+
+                    if event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_r:
+                            self.restart()
+                            self.game_over = False
+
+                pygame.display.update()
+                if self.game_over:
+                    pygame.time.wait(3000)
+
+###########################
+###########################
+###########################
+
         elif mode == "P2MiniMax":
             pygame.display.set_caption('TIC TAC TOE - Player (o) vs Minimax (x)')
             while not self.game_over:
@@ -500,6 +588,11 @@ class TicTacToeGame:
                 pygame.display.update()
                 if self.game_over:
                     pygame.time.wait(3000)
+
+###########################
+###########################
+###########################
+
         else:
             while not self.game_over:
                 for event in pygame.event.get():
@@ -541,7 +634,8 @@ def main():
     #P2MiniMax
     #B2QLearning
     #P2QLearning
-    game.run(mode = "P2QLearning")
+    #P2QLearnBotTrain
+    game.run(mode = "P2QLearnBotTrain")
 
 if __name__ == '__main__':
     main()
