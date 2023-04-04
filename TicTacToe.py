@@ -10,7 +10,7 @@ from qlearning import QLearningAgent
 import os
 
 class TicTacToeGame:
-    def __init__(self, screen_size=(600, 600)):
+    def __init__(self, screen_size=(600, 600), show_display=True):
         # Calculate the scaling factor based on the default screen size (600x600)
         scaling_factor = min(screen_size[0] / 600, screen_size[1] / 600)
         self.screen_size = screen_size
@@ -36,6 +36,12 @@ class TicTacToeGame:
         pygame.display.set_caption('TIC TAC TOE')
         self.screen.fill(self.bg_color)
         self.draw_lines()
+        self.show_display = show_display
+        if self.show_display:
+            pygame.init()
+            self.screen = pygame.display.set_mode((self.width, self.height))
+            pygame.display.set_caption('TIC TAC TOE')
+            self.screen.fill(self.bg_color)
 
     def draw_lines(self):
         pygame.draw.line(self.screen, self.line_color, (0, self.square_size), (self.width, self.square_size), self.line_width)
@@ -154,6 +160,21 @@ class TicTacToeGame:
                 self.board[row][col] = 0
         self.player = 1
         self.game_over = False
+
+    def reset_game(self):
+        if self.show_display:
+            pygame.display.quit()
+
+        self.board = np.zeros((self.board_rows, self.board_cols))
+        self.player = 1
+        self.game_over = False
+
+        if self.show_display:
+            pygame.init()
+            self.screen = pygame.display.set_mode(self.screen_size)
+            pygame.display.set_caption('TIC TAC TOE')
+            self.screen.fill(self.bg_color)
+            self.draw_lines()
 
 ### Default Opponent BOT ###
     def tictactoe_Bot(self):
@@ -289,7 +310,6 @@ class TicTacToeGame:
 
 ### controller function to run each modes of the game ###
     def run(self, mode="P2P"):
-        q_agent = QLearningAgent(epsilon=0.1, alpha=0.5, gamma=0.9)
         if mode == "P2B":
             pygame.display.set_caption('TIC TAC TOE - Player (o) vs Bot (x)')
             while not self.game_over:
@@ -380,12 +400,15 @@ class TicTacToeGame:
         elif mode == "B2QLearning":
             pass
         elif mode == "P2QLearning":
+            q_agent = QLearningAgent(epsilon=0.1, alpha=0.5, gamma=0.9)
             pygame.display.set_caption('TIC TAC TOE - Player (o) vs Q-learning (x)')
             q_table_file = 'q_table.csv'
-            if os.path.exists(q_table_file):
-                q_agent.load_q_table(q_table_file)
+            if not os.path.exists(q_table_file):
+                q_agent.train_q_learning_agent(TicTacToeGame, num_episodes=1000, q_table_file='q_table.csv')
             else:
-                q_agent.create_empty_q_table()
+                q_agent.load_q_table(q_table_file)
+            
+            self.reset_game()
             while not self.game_over:
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
