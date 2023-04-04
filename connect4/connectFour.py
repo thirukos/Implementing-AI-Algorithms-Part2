@@ -9,8 +9,8 @@ class ConnectFour:
     def __init__(self):
         self.board_color = (23, 32, 42)
         self.background_color = (121, 125, 127)
-        self.player1_color = (255,0,0)
-        self.player2_color = (241, 196, 15)
+        self.player1_color = (234,182,118)
+        self.player2_color = (171,219,227)
         self.ROW_COUNT = 6
         self.COLUMN_COUNT = 7
         self.SQUARESIZE = 80
@@ -117,11 +117,3 @@ class ConnectFour:
                     self.turn = self.turn % 2
                     if self.game_over:
                         pygame.time.wait(3000)
-
-
-if __name__ == '__main__':
-    pygame.init()
-    game = ConnectFour()
-    game.draw_board()
-    game.run_game()
-    pygame.quit()
