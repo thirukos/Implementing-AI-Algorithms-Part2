@@ -38,7 +38,7 @@ class ConnectFour:
         for r in range(self.ROW_COUNT):
             if self.board[r][col] == 0:
                 return r
-
+            
     def print_board(self):
         print(np.flip(self.board, 0))
 

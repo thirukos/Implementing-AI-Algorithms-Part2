@@ -11,7 +11,7 @@ class ConnectFourBot(ConnectFour):
     def get_bot_move(self):
         for col in range(self.COLUMN_COUNT):
             row = self.get_next_open_row(col)
-            if self.is_valid_location(col):
+            if self.is_valid_location(col).any():
                 self.drop_piece(row, col, 2)
                 if self.winning_move(2):
                     return col
@@ -19,14 +19,18 @@ class ConnectFourBot(ConnectFour):
         
         for col in range(self.COLUMN_COUNT):
             row = self.get_next_open_row(col)
-            if self.is_valid_location(col):
+            if self.is_valid_location(col).any():
                 self.drop_piece(row, col, 1)
                 if self.winning_move(1):
                     self.drop_piece(row, col, 0)
                     return col
                 self.drop_piece(row, col, 0)
+        
+        valid_moves = np.where(self.board[0] == 0)[0]
+        if len(valid_moves) == 0:
+            return None
 
-        return np.random.choice(np.where(self.board[0] == 0)[0])
+        return np.random.choice(valid_moves)
 
     def run_game(self):
         while not self.game_over:
@@ -46,7 +50,7 @@ class ConnectFourBot(ConnectFour):
                     posx = event.pos[0]
                     col = int(math.floor(posx/self.SQUARESIZE))
 
-                    if self.is_valid_location(col):
+                    if self.is_valid_location(col).any():
                         row = self.get_next_open_row(col)
                         self.drop_piece(row, col, 1)
 
@@ -54,12 +58,15 @@ class ConnectFourBot(ConnectFour):
                             label = self.myfont.render("Player 1 wins!!", 1, self.player1_color)
                             self.screen.blit(label, (40,10))
                             self.game_over = True
+                        else:
+                            self.turn += 1
+                            self.turn = self.turn % 2
                     else:
                         continue
-                else:
+                elif self.turn == 1:
                     col = self.get_bot_move()
 
-                    if self.is_valid_location(col):
+                    if self.is_valid_location(col).any():
                         row = self.get_next_open_row(col)
                         self.drop_piece(row, col, 2)
 
@@ -67,11 +74,12 @@ class ConnectFourBot(ConnectFour):
                             label = self.myfont.render("Bot wins!!", 1, self.player2_color)
                             self.screen.blit(label, (40,10))
                             self.game_over = True
+                        self.turn += 1
+                        self.turn = self.turn % 2
 
                 self.print_board()
                 self.draw_board()
-                self.turn += 1
-                self.turn = self.turn % 2
+
 
                 if self.game_over:
                     pygame.time.wait(3000)

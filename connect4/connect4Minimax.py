@@ -1,0 +1,151 @@
+import numpy as np
+from copy import deepcopy
+from connectFour import ConnectFour
+import pygame
+import sys
+import math
+
+class ConnectFourMinimax(ConnectFour):
+    def __init__(self, max_depth=3):
+        super().__init__()
+        self.max_depth = max_depth
+
+    def get_bot_move(self):
+        _, col = self.minimax(self.max_depth, -np.inf, np.inf, True)
+        return col
+
+    def minimax(self, depth, alpha, beta, maximizing_player):
+        if depth == 0 or self.game_over:
+            if self.winning_move(2):
+                return (1000000, None)
+            elif self.winning_move(1):
+                return (-1000000, None)
+            else:
+                return (self.score_board(), None)
+
+        if maximizing_player:
+            value = -np.inf
+            col = np.random.choice(np.where(self.board[0] == 0)[0])
+            for c in range(self.COLUMN_COUNT):
+                if self.is_valid_location(c).any():
+                    r = self.get_next_open_row(c)
+                    self.drop_piece(r, c, 2)
+                    new_value, _ = self.minimax(depth - 1, alpha, beta, False)
+                    self.drop_piece(r, c, 0)
+                    if new_value > value:
+                        value = new_value
+                        col = c
+                    alpha = max(alpha, value)
+                    if alpha >= beta:
+                        break
+            return (value, col)
+        else:
+            value = np.inf
+            col = np.random.choice(np.where(self.board[0] == 0)[0])
+            for c in range(self.COLUMN_COUNT):
+                if self.is_valid_location(c).any():
+                    r = self.get_next_open_row(c)
+                    self.drop_piece(r, c, 1)
+                    new_value, _ = self.minimax(depth - 1, alpha, beta, True)
+                    self.drop_piece(r, c, 0)
+                    if new_value < value:
+                        value = new_value
+                        col = c
+                    beta = min(beta, value)
+                    if alpha >= beta:
+                        break
+            return (value, col)
+
+    def score_board(self):
+        score = 0
+        # Check horizontal score
+        for r in range(self.ROW_COUNT):
+            row_array = [int(i) for i in list(self.board[r,:])]
+            for c in range(self.COLUMN_COUNT-3):
+                window = row_array[c:c+4]
+                score += self.evaluate_window(window)
+        # Check vertical score
+        for c in range(self.COLUMN_COUNT):
+            col_array = [int(i) for i in list(self.board[:,c])]
+            for r in range(self.ROW_COUNT-3):
+                window = col_array[r:r+4]
+                score += self.evaluate_window(window)
+        # Check diagonal score (down-right)
+        for r in range(self.ROW_COUNT-3):
+            for c in range(self.COLUMN_COUNT-3):
+                window = [self.board[r+i][c+i] for i in range(4)]
+                score += self.evaluate_window(window)
+        # Check diagonal score (up-right)
+        for r in range(3, self.ROW_COUNT):
+            for c in range(self.COLUMN_COUNT-3):
+                window = [self.board[r-i][c+i] for i in range(4)]
+                score += self.evaluate_window(window)
+        return score
+
+    def evaluate_window(self, window):
+        score = 0
+        opp_piece = 1
+        bot_piece = 2
+        empty = 0
+        if window.count(bot_piece) == 4:
+            score += 100
+        elif window.count(bot_piece) == 3 and window.count(empty) == 1:
+            score += 5
+        elif window.count(bot_piece) == 2 and window.count(empty) == 2:
+            score += 2
+
+        if window.count(opp_piece) == 3 and window.count(empty) == 1:
+            score -= 4
+        return score
+    
+    def run_game(self):
+        while not self.game_over:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    sys.exit()
+                if event.type == pygame.MOUSEMOTION:
+                    pygame.draw.rect(self.screen, self.background_color, (0,0, self.width, self.SQUARESIZE))
+                    posx = event.pos[0]
+                    if self.turn == 0:
+                        pygame.draw.circle(self.screen, self.player1_color, (posx, int(self.SQUARESIZE/2)), self.RADIUS)
+                    else:
+                        pygame.draw.circle(self.screen, self.player2_color, (posx, int(self.SQUARESIZE/2)), self.RADIUS)
+                    pygame.display.update()
+                if event.type == pygame.MOUSEBUTTONDOWN and self.turn == 0:
+                    pygame.draw.rect(self.screen, self.background_color, (0,0, self.width, self.SQUARESIZE))
+                    posx = event.pos[0]
+                    col = int(math.floor(posx/self.SQUARESIZE))
+
+                    if self.is_valid_location(col).any():
+                        row = self.get_next_open_row(col)
+                        self.drop_piece(row, col, 1)
+
+                        if self.winning_move(1):
+                            label = self.myfont.render("Player wins!!", 1, self.player1_color)
+                            self.screen.blit(label, (40,10))
+                            self.game_over = True
+                        else:
+                            self.turn += 1
+                            self.turn = self.turn % 2
+                    else:
+                        continue
+                elif self.turn == 1:
+                    col = self.get_bot_move()
+
+                    if self.is_valid_location(col).any():
+                        row = self.get_next_open_row(col)
+                        self.drop_piece(row, col, 2)
+
+                        if self.winning_move(2):
+                            label = self.myfont.render("Minimax wins!!", 1, self.player2_color)
+                            self.screen.blit(label, (40,10))
+                            self.game_over = True
+                        self.turn += 1
+                        self.turn = self.turn % 2
+
+                self.print_board()
+                self.draw_board()
+
+
+                if self.game_over:
+                    pygame.time.wait(3000)
