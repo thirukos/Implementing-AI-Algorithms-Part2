@@ -186,43 +186,44 @@ class ConnectFourMinimax(ConnectFour):
                     if event.type == pygame.QUIT:
                         sys.exit()
 
-                # Player 1 move (Bot)
-                if self.turn == 0:
                     col = ConnectFourBot.get_bot_move(self)
-                    if self.is_valid_location(col).any():
-                        row = self.get_next_open_row(col)
-                        self.drop_piece(row, col, 1)
-                        self.draw_board()
-                        pygame.display.update()
-                        pygame.time.wait(1000)
 
-                        if self.winning_move(1):
-                            label = self.myfont.render("Player wins!!", 1, self.player1_color)
-                            self.screen.blit(label, (40, 10))
-                            self.game_over = True
-                        else:
-                            self.turn += 1
-                            self.turn = self.turn % 2
-
-                # Player 2 move (Minimax)
-                elif self.turn == 1:
-                    col = self.get_bot_move()
-                    if self.is_valid_location(col).any():
+                    if self.is_valid_location(col):
                         row = self.get_next_open_row(col)
                         self.drop_piece(row, col, 2)
-                        self.draw_board()
-                        pygame.display.update()
                         pygame.time.wait(1000)
 
                         if self.winning_move(2):
-                            label = self.myfont.render("Minimax wins!!", 1, self.player2_color)
+                            label = self.myfont.render("Bot wins!!", 1, self.player2_color)
                             self.screen.blit(label, (40, 10))
                             self.game_over = True
+                            break
                         else:
                             self.turn += 1
                             self.turn = self.turn % 2
 
+                if self.turn == 1:
+                    col = self.get_bot_move()
+
+                    if self.is_valid_location(col):
+                        row = self.get_next_open_row(col)
+                        self.drop_piece(row, col, 1)
+                        pygame.time.wait(1000)
+
+                        if self.winning_move(1):
+                            label = self.myfont.render("Minimax wins!!", 1, self.player1_color)
+                            self.screen.blit(label, (40, 10))
+                            self.game_over = True
+                            break
+                        else:
+                            self.turn += 1
+                            self.turn = self.turn % 2
+
+                self.draw_board()
+                pygame.display.update()
+
                 if self.game_over:
                     pygame.time.wait(3000)
+
             # pass
         
