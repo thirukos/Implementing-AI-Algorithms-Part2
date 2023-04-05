@@ -38,27 +38,54 @@ class ConnectFour:
         for r in range(self.ROW_COUNT):
             if self.board[r][col] == 0:
                 return r
+        return -1
             
     def print_board(self):
         print(np.flip(self.board, 0))
 
+    # def winning_move(self, piece):
+    #     for c in range(self.COLUMN_COUNT-3):
+    #         for r in range(self.ROW_COUNT):
+    #             if self.board[r][c] == piece and self.board[r][c+1] == piece and self.board[r][c+2] == piece and self.board[r][c+3] == piece:
+    #                 return True
+    #     for c in range(self.COLUMN_COUNT):
+    #         for r in range(self.ROW_COUNT-3):
+    #             if self.board[r][c] == piece and self.board[r+1][c] == piece and self.board[r+2][c] == piece and self.board[r+3][c] == piece:
+    #                 return True
+    #     for c in range(self.COLUMN_COUNT-3):
+    #         for r in range(self.ROW_COUNT-3):
+    #             if self.board[r][c] == piece and self.board[r+1][c+1] == piece and self.board[r+2][c+2] == piece and self.board[r+3][c+3] == piece:
+    #                 return True
+    #     for c in range(self.COLUMN_COUNT-3):
+    #         for r in range(3, self.ROW_COUNT):
+    #             if self.board[r][c] == piece and self.board[r-1][c+1] == piece and self.board[r-2][c+2] == piece and self.board[r-3][c+3] == piece:
+    #                 return True
     def winning_move(self, piece):
-        for c in range(self.COLUMN_COUNT-3):
-            for r in range(self.ROW_COUNT):
+        # Check horizontal
+        for r in range(self.ROW_COUNT):
+            for c in range(self.COLUMN_COUNT-3):
                 if self.board[r][c] == piece and self.board[r][c+1] == piece and self.board[r][c+2] == piece and self.board[r][c+3] == piece:
                     return True
-        for c in range(self.COLUMN_COUNT):
-            for r in range(self.ROW_COUNT-3):
+
+        # Check vertical
+        for r in range(self.ROW_COUNT-3):
+            for c in range(self.COLUMN_COUNT):
                 if self.board[r][c] == piece and self.board[r+1][c] == piece and self.board[r+2][c] == piece and self.board[r+3][c] == piece:
                     return True
-        for c in range(self.COLUMN_COUNT-3):
-            for r in range(self.ROW_COUNT-3):
+
+        # Check diagonal (positive slope)
+        for r in range(self.ROW_COUNT-3):
+            for c in range(self.COLUMN_COUNT-3):
                 if self.board[r][c] == piece and self.board[r+1][c+1] == piece and self.board[r+2][c+2] == piece and self.board[r+3][c+3] == piece:
                     return True
-        for c in range(self.COLUMN_COUNT-3):
-            for r in range(3, self.ROW_COUNT):
+
+        # Check diagonal (negative slope)
+        for r in range(3, self.ROW_COUNT):
+            for c in range(self.COLUMN_COUNT-3):
                 if self.board[r][c] == piece and self.board[r-1][c+1] == piece and self.board[r-2][c+2] == piece and self.board[r-3][c+3] == piece:
                     return True
+
+        return False
 
     def draw_board(self):
         for c in range(self.COLUMN_COUNT):
