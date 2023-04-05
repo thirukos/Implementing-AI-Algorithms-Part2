@@ -1,35 +1,29 @@
 import numpy as np
 from copy import deepcopy
 from connectFour import ConnectFour
-from connetFourBot import ConnectFourBot
+from connectFourBot import ConnectFourBot
 import pygame
 import sys
 import math
 
 class ConnectFourMinimax(ConnectFour):
-    def __init__(self, max_depth=3):
+    def __init__(self, max_depth=5):
         super().__init__()
         self.max_depth = max_depth
-
-    # def get_bot_move(self):
-    #     valid_cols = [col for col in range(self.COLUMN_COUNT) if self.is_valid_location(col).any()]
-    #     if not valid_cols:
-    #         return np.random.randint(0, self.COLUMN_COUNT)
-    #     _, col = self.minimax(self.max_depth, -np.inf, np.inf, True)
-    #     return col
     
     def get_bot_move(self):
-        valid_cols = [col for col in range(self.COLUMN_COUNT) if self.is_valid_location(col).any()]
+        valid_cols = [col for col in range(self.COLUMN_COUNT) if self.is_valid_location(col)]
         if not valid_cols:
             return np.random.randint(0, self.COLUMN_COUNT)
         _, col = self.minimax(self.max_depth, -np.inf, np.inf, True)
-        while not self.is_valid_location(col).any():
+        while not self.is_valid_location(col):
             col = np.random.randint(0, self.COLUMN_COUNT)
         row = self.get_next_open_row(col)
         while row == -1:
             col = np.random.randint(0, self.COLUMN_COUNT)
             row = self.get_next_open_row(col)
         return col
+
 
     def minimax(self, depth, alpha, beta, maximizing_player):
         if depth == 0 or self.game_over:
@@ -46,8 +40,8 @@ class ConnectFourMinimax(ConnectFour):
             if valid_moves.size == 0:
                 return (value, None)
             col = np.random.choice(valid_moves)
-            print(f"max - random column choice {col}")
-            self.print_board()
+            # print(f"max - random column choice {col}")
+            # self.print_board()
             for c in range(self.COLUMN_COUNT):
                 if self.is_valid_location(c).any():
                     r = self.get_next_open_row(c)
@@ -67,8 +61,8 @@ class ConnectFourMinimax(ConnectFour):
             if valid_moves.size == 0:
                 return (value, None)
             col = np.random.choice(valid_moves)
-            print(f"min - random column choice {col}")
-            self.print_board()
+            # print(f"min - random column choice {col}")
+            # self.print_board()
             for c in range(self.COLUMN_COUNT):
                 if self.is_valid_location(c).any():
                     r = self.get_next_open_row(c)
@@ -125,105 +119,91 @@ class ConnectFourMinimax(ConnectFour):
             score -= 4
         return score
     
-    def run_game(self, mode = "p2a"):
-        if mode == "p2a":
-            while not self.game_over:
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        sys.exit()
-                    if event.type == pygame.MOUSEMOTION:
-                        pygame.draw.rect(self.screen, self.background_color, (0,0, self.width, self.SQUARESIZE))
-                        posx = event.pos[0]
-                        if self.turn == 0:
-                            pygame.draw.circle(self.screen, self.player1_color, (posx, int(self.SQUARESIZE/2)), self.RADIUS)
-                        else:
-                            pygame.draw.circle(self.screen, self.player2_color, (posx, int(self.SQUARESIZE/2)), self.RADIUS)
-                        pygame.display.update()
-                    if event.type == pygame.MOUSEBUTTONDOWN and self.turn == 0:
-                        pygame.draw.rect(self.screen, self.background_color, (0,0, self.width, self.SQUARESIZE))
-                        posx = event.pos[0]
-                        col = int(math.floor(posx/self.SQUARESIZE))
+    def run_game(self):
+        while not self.game_over:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    sys.exit()
+                if event.type == pygame.MOUSEMOTION:
+                    pygame.draw.rect(self.screen, self.background_color, (0, 0, self.width, self.SQUARESIZE))
+                    posx = event.pos[0]
+                    if self.turn == 0:
+                        pygame.draw.circle(self.screen, self.player1_color, (posx, int(self.SQUARESIZE / 2)), self.RADIUS)
+                    pygame.display.update()
 
-                        if self.is_valid_location(col).any():
-                            row = self.get_next_open_row(col)
-                            self.drop_piece(row, col, 1)
-
-                            if self.winning_move(1):
-                                label = self.myfont.render("Player wins!!", 1, self.player1_color)
-                                self.screen.blit(label, (40,10))
-                                self.game_over = True
-                                # break
-                            else:
-                                self.turn += 1
-                                self.turn = self.turn % 2
-                        else:
-                            continue
-                    elif self.turn == 1:
-                        col = self.get_bot_move()
-
-                        if self.is_valid_location(col).any():
-                            row = self.get_next_open_row(col)
-                            self.drop_piece(row, col, 2)
-
-                            if self.winning_move(2):
-                                label = self.myfont.render("Minimax wins!!", 1, self.player2_color)
-                                self.screen.blit(label, (40,10))
-                                self.game_over = True
-                                # break
-                            self.turn += 1
-                            self.turn = self.turn % 2
-
-                    # self.print_board()
-                    self.draw_board()
-
-
-                    if self.game_over:
-                        pygame.time.wait(3000)
-
-        elif mode == "b2a":
-            while not self.game_over:
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        sys.exit()
-
-                    col = ConnectFourBot.get_bot_move(self)
-
-                    if self.is_valid_location(col):
-                        row = self.get_next_open_row(col)
-                        self.drop_piece(row, col, 2)
-                        pygame.time.wait(1000)
-
-                        if self.winning_move(2):
-                            label = self.myfont.render("Bot wins!!", 1, self.player2_color)
-                            self.screen.blit(label, (40, 10))
-                            self.game_over = True
-                            break
-                        else:
-                            self.turn += 1
-                            self.turn = self.turn % 2
-
-                if self.turn == 1:
-                    col = self.get_bot_move()
+                if event.type == pygame.MOUSEBUTTONDOWN and self.turn == 0:
+                    pygame.draw.rect(self.screen, self.background_color, (0, 0, self.width, self.SQUARESIZE))
+                    posx = event.pos[0]
+                    col = int(math.floor(posx / self.SQUARESIZE))
 
                     if self.is_valid_location(col):
                         row = self.get_next_open_row(col)
                         self.drop_piece(row, col, 1)
-                        pygame.time.wait(1000)
 
                         if self.winning_move(1):
-                            label = self.myfont.render("Minimax wins!!", 1, self.player1_color)
+                            label = self.myfont.render("Player 1 wins!!", 1, self.player1_color)
                             self.screen.blit(label, (40, 10))
                             self.game_over = True
-                            break
-                        else:
-                            self.turn += 1
-                            self.turn = self.turn % 2
 
+                        self.turn = 1
+
+                if self.turn == 1 and not self.game_over:
+                    col = self.get_bot_move()
+                    if col is not None:
+                        row = self.get_next_open_row(col)
+                        self.drop_piece(row, col, 2)
+
+                        if self.winning_move(2):
+                            label = self.myfont.render("Minimax Bot wins!!", 1, self.player2_color)
+                            self.screen.blit(label, (40, 10))
+                            self.game_over = True
+
+                        self.turn = 0
+
+                # self.print_board()
                 self.draw_board()
-                pygame.display.update()
 
                 if self.game_over:
                     pygame.time.wait(3000)
 
-            # pass
-        
+    def run_game_bot_vs_minimax(self, move_delay=500):
+        bot1 = ConnectFourBot()
+
+        while not self.game_over:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    sys.exit()
+
+            if self.turn == 0:
+                col = bot1.get_move(self)
+                while not self.is_valid_location(col):
+                    col = bot1.get_move(self)
+                row = self.get_next_open_row(col)
+                self.drop_piece(row, col, 1)
+
+                if self.winning_move(1):
+                    label = self.myfont.render("Bot 1 wins!!", 1, self.player1_color)
+                    self.screen.blit(label, (40, 10))
+                    self.game_over = True
+
+                self.turn = 1
+                pygame.time.delay(move_delay)
+
+            elif self.turn == 1 and not self.game_over:
+                col = self.get_bot_move()
+                if col is not None:
+                    row = self.get_next_open_row(col)
+                    self.drop_piece(row, col, 2)
+
+                    if self.winning_move(2):
+                        label = self.myfont.render("Minimax Bot wins!!", 1, self.player2_color)
+                        self.screen.blit(label, (40, 10))
+                        self.game_over = True
+
+                    self.turn = 0
+                pygame.time.delay(move_delay)
+
+            self.draw_board()
+
+            if self.game_over:
+                pygame.time.wait(3000)

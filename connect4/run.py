@@ -1,6 +1,6 @@
 import pygame
 from connectFour import ConnectFour # connect 4 game class
-from connetFourBot import ConnectFourBot
+from connectFourBot import ConnectFourBot
 from connect4Minimax import ConnectFourMinimax
 
 def p2p():
@@ -16,12 +16,12 @@ def p2b():
 def p2MM():
     game = ConnectFourMinimax()
     game.draw_board()
-    game.run_game("p2a")
+    game.run_game()
 
 def b2MM():
     game = ConnectFourMinimax()
     game.draw_board()
-    game.run_game("b2a")
+    game.run_game_bot_vs_minimax
 
 if __name__ == '__main__':
     pygame.init()

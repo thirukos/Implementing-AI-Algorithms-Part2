@@ -33,6 +33,13 @@ class ConnectFour:
 
     def is_valid_location(self, col):
         return self.board[self.ROW_COUNT-1][col] == 0
+    
+    def get_valid_locations(self):
+        valid_locations = []
+        for col in range(self.COLUMN_COUNT):
+            if self.is_valid_location(col):
+                valid_locations.append(col)
+        return valid_locations
 
     def get_next_open_row(self, col):
         for r in range(self.ROW_COUNT):
@@ -43,23 +50,6 @@ class ConnectFour:
     def print_board(self):
         print(np.flip(self.board, 0))
 
-    # def winning_move(self, piece):
-    #     for c in range(self.COLUMN_COUNT-3):
-    #         for r in range(self.ROW_COUNT):
-    #             if self.board[r][c] == piece and self.board[r][c+1] == piece and self.board[r][c+2] == piece and self.board[r][c+3] == piece:
-    #                 return True
-    #     for c in range(self.COLUMN_COUNT):
-    #         for r in range(self.ROW_COUNT-3):
-    #             if self.board[r][c] == piece and self.board[r+1][c] == piece and self.board[r+2][c] == piece and self.board[r+3][c] == piece:
-    #                 return True
-    #     for c in range(self.COLUMN_COUNT-3):
-    #         for r in range(self.ROW_COUNT-3):
-    #             if self.board[r][c] == piece and self.board[r+1][c+1] == piece and self.board[r+2][c+2] == piece and self.board[r+3][c+3] == piece:
-    #                 return True
-    #     for c in range(self.COLUMN_COUNT-3):
-    #         for r in range(3, self.ROW_COUNT):
-    #             if self.board[r][c] == piece and self.board[r-1][c+1] == piece and self.board[r-2][c+2] == piece and self.board[r-3][c+3] == piece:
-    #                 return True
     def winning_move(self, piece):
         # Check horizontal
         for r in range(self.ROW_COUNT):
