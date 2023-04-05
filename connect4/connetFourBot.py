@@ -3,34 +3,63 @@ import pygame
 import sys
 import math
 from connectFour import ConnectFour
+import random
 
 class ConnectFourBot(ConnectFour):
-    def __init__(self):
+    def __init__(self, piece):
         super().__init__()
+        self.piece = piece
+        self.opponent_piece = self.piece % 2 + 1
 
     def get_bot_move(self):
-        for col in range(self.COLUMN_COUNT):
-            row = self.get_next_open_row(col)
-            if self.is_valid_location(col).any():
-                self.drop_piece(row, col, 2)
-                if self.winning_move(2):
-                    return col
-                self.drop_piece(row, col, 0)
+        valid_cols = self.get_valid_locations()
+        col_move = random.choice(valid_cols)
         
-        for col in range(self.COLUMN_COUNT):
-            row = self.get_next_open_row(col)
-            if self.is_valid_location(col).any():
-                self.drop_piece(row, col, 1)
-                if self.winning_move(1):
-                    self.drop_piece(row, col, 0)
-                    return col
-                self.drop_piece(row, col, 0)
-        
-        valid_moves = np.where(self.board[0] == 0)[0]
-        if len(valid_moves) == 0:
+        def find_move(board, piece):
+            ROW_COUNT = len(board)
+            COLUMN_COUNT = len(board[0])
+
+            for r in range(ROW_COUNT):
+                for c in range(COLUMN_COUNT - 3):
+                    row = [board[r][c], board[r][c+1], board[r][c+2], board[r][c+3]]
+                    if row.count(piece) == 3 and row.count(0) == 1:
+                        if r == 0 or board[r-1][c + row.index(0)] != 0:
+                            return c + row.index(0)
+
+            for r in range(ROW_COUNT - 3):
+                for c in range(COLUMN_COUNT):
+                    col = [board[r][c], board[r+1][c], board[r+2][c], board[r+3][c]]
+                    if col.count(piece) == 3 and col.count(0) == 1:
+                        if board[r+3][c] == 0:
+                            return c
+
+            for r in range(ROW_COUNT - 3):
+                for c in range(COLUMN_COUNT - 3):
+                    diag = [board[r][c], board[r+1][c+1], board[r+2][c+2], board[r+3][c+3]]
+                    if diag.count(piece) == 3 and diag.count(0) == 1:
+                        if r == 0 or board[r+diag.index(0)-1][c+diag.index(0)] != 0:
+                            return c + diag.index(0)
+
+            for r in range(3, ROW_COUNT):
+                for c in range(COLUMN_COUNT - 3):
+                    anti_diag = [board[r][c], board[r-1][c+1], board[r-2][c+2], board[r-3][c+3]]
+                    if anti_diag.count(piece) == 3 and anti_diag.count(0) == 1:
+                        if r == 3 or board[r-anti_diag.index(0)-1][c+anti_diag.index(0)] != 0:
+                            return c + anti_diag.index(0)
+
             return None
 
-        return np.random.choice(valid_moves)
+        # Block opponent's moves
+        block_move = find_move(self.board, self.opponent_piece)
+        if block_move is not None:
+            col_move = block_move
+
+        # Make own winning move
+        winning_move = find_move(self.board, self.piece)
+        if winning_move is not None:
+            col_move = winning_move
+
+        return col_move
 
     def run_game(self):
         while not self.game_over:
@@ -77,7 +106,7 @@ class ConnectFourBot(ConnectFour):
                         self.turn += 1
                         self.turn = self.turn % 2
 
-                self.print_board()
+                # self.print_board()
                 self.draw_board()
 
 

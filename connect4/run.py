@@ -9,14 +9,14 @@ def p2p():
     game.run_game()
 
 def p2b():
-    game = ConnectFourBot()
+    game = ConnectFourBot(1)
     game.draw_board()
     game.run_game()
 
 def p2MM():
     game = ConnectFourMinimax()
     game.draw_board()
-    game.run_game("p2a")
+    game.run_game()
 
 def b2MM():
     game = ConnectFourMinimax()
@@ -27,6 +27,6 @@ if __name__ == '__main__':
     pygame.init()
     # p2p()
     # p2b()
-    # p2MM()
-    b2MM()
+    p2MM()
+    # b2MM()
     pygame.quit()

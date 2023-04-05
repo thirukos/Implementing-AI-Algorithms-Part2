@@ -33,6 +33,13 @@ class ConnectFour:
 
     def is_valid_location(self, col):
         return self.board[self.ROW_COUNT-1][col] == 0
+    
+    def get_valid_locations(self):
+        valid_locations = []
+        for col in range(self.COLUMN_COUNT):
+            if self.is_valid_location(col):
+                valid_locations.append(col)
+        return valid_locations
 
     def get_next_open_row(self, col):
         for r in range(self.ROW_COUNT):
@@ -43,23 +50,6 @@ class ConnectFour:
     def print_board(self):
         print(np.flip(self.board, 0))
 
-    # def winning_move(self, piece):
-    #     for c in range(self.COLUMN_COUNT-3):
-    #         for r in range(self.ROW_COUNT):
-    #             if self.board[r][c] == piece and self.board[r][c+1] == piece and self.board[r][c+2] == piece and self.board[r][c+3] == piece:
-    #                 return True
-    #     for c in range(self.COLUMN_COUNT):
-    #         for r in range(self.ROW_COUNT-3):
-    #             if self.board[r][c] == piece and self.board[r+1][c] == piece and self.board[r+2][c] == piece and self.board[r+3][c] == piece:
-    #                 return True
-    #     for c in range(self.COLUMN_COUNT-3):
-    #         for r in range(self.ROW_COUNT-3):
-    #             if self.board[r][c] == piece and self.board[r+1][c+1] == piece and self.board[r+2][c+2] == piece and self.board[r+3][c+3] == piece:
-    #                 return True
-    #     for c in range(self.COLUMN_COUNT-3):
-    #         for r in range(3, self.ROW_COUNT):
-    #             if self.board[r][c] == piece and self.board[r-1][c+1] == piece and self.board[r-2][c+2] == piece and self.board[r-3][c+3] == piece:
-    #                 return True
     def winning_move(self, piece):
         # Check horizontal
         for r in range(self.ROW_COUNT):
@@ -105,42 +95,51 @@ class ConnectFour:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     sys.exit()
+
                 if event.type == pygame.MOUSEMOTION:
-                    pygame.draw.rect(self.screen, self.background_color, (0,0, self.width, self.SQUARESIZE))
+                    pygame.draw.rect(self.screen, self.background_color, (0, 0, self.width, self.SQUARESIZE))
                     posx = event.pos[0]
-                    if self.turn == 0:
-                        pygame.draw.circle(self.screen, self.player1_color, (posx, int(self.SQUARESIZE/2)), self.RADIUS)
-                    else:
-                        pygame.draw.circle(self.screen, self.player2_color, (posx, int(self.SQUARESIZE/2)), self.RADIUS)
+                    if self.turn == 0:  # Player 1 (human)
+                        pygame.draw.circle(self.screen, self.player1_color, (posx, int(self.SQUARESIZE / 2)), self.RADIUS)
                     pygame.display.update()
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    pygame.draw.rect(self.screen, self.background_color, (0,0, self.width, self.SQUARESIZE))
-                    if self.turn == 0:
-                        posx = event.pos[0]
-                        col = int(math.floor(posx/self.SQUARESIZE))
 
-                        if self.is_valid_location(col):
-                            row = self.get_next_open_row(col)
-                            self.drop_piece(row, col, 1)
+                if event.type == pygame.MOUSEBUTTONDOWN and self.turn == 0:  # Player 1 (human)
+                    pygame.draw.rect(self.screen, self.background_color, (0, 0, self.width, self.SQUARESIZE))
+                    posx = event.pos[0]
+                    col = int(math.floor(posx / self.SQUARESIZE))
 
-                            if self.winning_move(1):
-                                label = self.myfont.render("Player 1 wins!!", 1, self.player1_color)
-                                self.screen.blit(label, (40,10))
-                                self.game_over = True
-                    else:
-                        posx = event.pos[0]
-                        col = int(math.floor(posx/self.SQUARESIZE))
-                        if self.is_valid_location(col):
-                            row = self.get_next_open_row(col)
-                            self.drop_piece(row, col, 2)
+                    if self.is_valid_location(col):
+                        row = self.get_next_open_row(col)
+                        self.drop_piece(row, col, 1)
 
-                            if self.winning_move(2):
-                                label = self.myfont.render("Player 2 wins!!", 1, self.player2_color)
-                                self.screen.blit(label, (40,10))
-                                self.game_over = True
+                        if self.winning_move(1):
+                            label = self.myfont.render("Player 1 (human) wins!!", 1, self.player1_color)
+                            self.screen.blit(label, (40, 10))
+                            self.game_over = True
+
                     self.print_board()
                     self.draw_board()
-                    self.turn += 1
-                    self.turn = self.turn % 2
+                    self.turn = 1
+
+                    if self.game_over:
+                        pygame.time.wait(3000)
+                        break
+
+                if self.turn == 1 and not self.game_over:  # Player 2 (bot)
+                    col = self.get_bot_move()
+
+                    if self.is_valid_location(col):
+                        row = self.get_next_open_row(col)
+                        self.drop_piece(row, col, 2)
+
+                        if self.winning_move(2):
+                            label = self.myfont.render("Player 2 (bot) wins!!", 1, self.player2_color)
+                            self.screen.blit(label, (40, 10))
+                            self.game_over = True
+
+                    self.print_board()
+                    self.draw_board()
+                    self.turn = 0
+
                     if self.game_over:
                         pygame.time.wait(3000)
