@@ -371,8 +371,8 @@ class TicTacToeGame:
 ###########################
 
         elif mode == "B2MiniMax":
-            # pygame.display.set_caption('TIC TAC TOE - Minimax (o) vs Bot (x)')
-            move_delay = 0
+            pygame.display.set_caption('TIC TAC TOE - Minimax (o) vs Bot (x)')
+            move_delay = 500
             next_move_time = pygame.time.get_ticks() + move_delay
 
             while not self.game_over:
@@ -394,7 +394,8 @@ class TicTacToeGame:
                             if self.check_win():
                                 self.game_over = True
                             elif self.is_board_full():
-                                self.restart()
+                                # self.restart()
+                                self.game_over = True
                             self.player = self.player % 2 + 1
                             self.draw_figures()
 
@@ -404,27 +405,28 @@ class TicTacToeGame:
                         if self.check_win():
                             self.game_over = True
                         elif self.is_board_full():
-                            self.restart()
+                            # self.restart()
+                            self.game_over = True
                         self.player = self.player % 2 + 1
                         self.draw_figures()
 
                     next_move_time = current_time + move_delay
 
-                # pygame.display.update()
-                # if self.game_over:
-                #     pygame.time.wait(2000)
+                pygame.display.update()
+                if self.game_over:
+                    pygame.time.wait(2000)
 
 ###########################
 ###########################
         elif mode == "B2QLearning":
-            # pygame.display.set_caption('TIC TAC TOE - QLearning (o) vs Bot (x)')
-            move_delay = 0
+            pygame.display.set_caption('TIC TAC TOE - QLearning (o) vs Bot (x)')
+            move_delay = 500
             next_move_time = pygame.time.get_ticks() + move_delay
             q_agent = QLearningAgent(epsilon=0.1, alpha=0.3, gamma=0.7)
-            pygame.display.set_caption('TIC TAC TOE - Player (o) vs Q-learning (x)')
-            q_table_file = 'Implementing-AI-Algorithms-Part2/tictactoe/q_tableBot-final.csv'
+            # pygame.display.set_caption('TIC TAC TOE - Player (o) vs Q-learning (x)')
+            q_table_file = 'Implementing-AI-Algorithms-Part2/tictactoe/q_tableBot-final2.csv'
             if not os.path.exists(q_table_file):
-                training_rewards, validation_rewards = q_agent.train_q_learning_bot(TicTacToeGame, num_episodes=10000, q_table_file=q_table_file)
+                training_rewards, validation_rewards = q_agent.train_q_learning_bot(TicTacToeGame, num_episodes=1000, q_table_file=q_table_file)
                 self.plot_learning_curves(training_rewards, validation_rewards)
             else:
                 q_agent.load_q_table(q_table_file)
@@ -445,12 +447,14 @@ class TicTacToeGame:
                 if current_time >= next_move_time:
                     if self.player == 1 and not self.game_over:
                         _, row, col = self.minimax(self.board, 0, True, -float('inf'), float('inf'))
+                        # row, col = self.tictactoe_Bot()
                         if self.available_square(row, col):
                             self.mark_square(row, col)
                             if self.check_win():
                                 self.game_over = True
                             elif self.is_board_full():
-                                self.restart()
+                                # self.restart()
+                                self.game_over = True
                             self.player = self.player % 2 + 1
                             self.draw_figures()
 
@@ -474,7 +478,8 @@ class TicTacToeGame:
                             if self.check_win():
                                 self.game_over = True
                             elif self.is_board_full():
-                                self.restart()
+                                # self.restart()
+                                self.game_over = True
                             self.player = self.player % 2 + 1
                             # self.draw_figures()
                     next_move_time = current_time + move_delay
@@ -692,13 +697,16 @@ class TicTacToeGame:
                     pygame.time.wait(3000)
 
     def get_winner(self):
-        return "bot" if self.player == 1 else "algo"   
+        if self.is_board_full() and not self.check_win():
+            return "draw"
+        else:
+            return "bot" if self.player == 1 else "algo"   
 def plot_results(results):
     bot_wins = results.count("bot")
     algo_wins = results.count("algo")
-    draws = len(results) - bot_wins - algo_wins
+    draws = results.count("draw")
 
-    labels = ["Bot", "Algo", "Draw"]
+    labels = ["Q-Learning", "Bot", "Draw"]
     values = [bot_wins, algo_wins, draws]
 
     plt.bar(labels, values)
@@ -708,7 +716,7 @@ def plot_results(results):
     plt.show()
 
 def main():
-    num_games = 100 
+    num_games = 2 
     results = [] 
     pygame.init()
     screen_size = (400, 400)
@@ -731,7 +739,7 @@ def main():
 
     # Print and plot the results
     print("Results:", results)
-    plot_results(results)
+    # plot_results(results)
     # game.run(mode = "B2MiniMax")
     
 if __name__ == '__main__':

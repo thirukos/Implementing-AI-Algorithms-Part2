@@ -12,8 +12,8 @@ BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 YELLOW = (255, 255, 0)
 
-ROW_COUNT = 6
-COLUMN_COUNT = 7
+ROW_COUNT = 5
+COLUMN_COUNT = 6
 
 PLAYER = 0
 AI = 1
@@ -50,7 +50,7 @@ def get_next_open_row(board, col):
     for r in range(ROW_COUNT):
         if board[r][col] == 0:
             return r
-    # return -1
+    # return None
 
 def print_board(board):
     print(np.flip(board, 0))
@@ -202,7 +202,11 @@ def get_bot_move(board, piece):
         col_move = block_move
     else:
         valid_cols = get_valid_locations(board)
-        col_move = random.choice(valid_cols)
+        if valid_cols:
+            col_move = random.choice(valid_cols)
+        else:
+            col_move = None
+        # col_move = random.choice(valid_cols)
 
     # Make own winning move
     winning_move = find_move(board, piece)
@@ -259,7 +263,7 @@ def minimax(board, depth, alpha, beta, maximizingPlayer):
 def state_to_tuple(board):
     return tuple(map(tuple, board))
 
-def qlearning(board, episodes, alpha=0.3, gamma=0.7, epsilon=0.9, validation_interval=10, save_file='qtable.pkl'):
+def qlearning(board, episodes, alpha=0.4, gamma=0.7, epsilon=0.5, validation_interval=10, save_file='qtable.pkl'):
     qtable = dict()
     training_rewards = []
     validation_rewards = []
@@ -310,6 +314,7 @@ def qlearning(board, episodes, alpha=0.3, gamma=0.7, epsilon=0.9, validation_int
 
             else:  # PLAYER's turn
                 col = get_bot_move(board, PLAYER_PIECE)
+                # col, minimax_score = minimax(board, 5, -math.inf, math.inf, True)
                 row = get_next_open_row(board, col)
                 if row != -1:
                     drop_piece(board, row, col, PLAYER_PIECE)
@@ -352,7 +357,8 @@ def qlearning(board, episodes, alpha=0.3, gamma=0.7, epsilon=0.9, validation_int
                         validation_turn = validation_turn % 2
 
                     else:  # PLAYER's turn
-                        col = get_bot_move(validation_board, PLAYER_PIECE)
+                        # col = get_bot_move(validation_board, PLAYER_PIECE)
+                        col, minimax_score = minimax(board, 5, -math.inf, math.inf, True)
                         row = get_next_open_row(validation_board, col)
                         if row != -1:
                             drop_piece(validation_board, row, col, PLAYER_PIECE)
@@ -396,12 +402,6 @@ def choose_action(qtable, board, piece, col):
             return qtable[key]
     return 0
 
-# def choose_best_action(qtable, board, piece, epsilon=0.2):
-#     if np.random.random() < epsilon:
-#         return random.randint(0, COLUMN_COUNT - 1)
-#     else:
-#         actions = [choose_action(qtable, board, piece, col) for col in range(COLUMN_COUNT)]
-#         return np.argmax(actions)
 def choose_best_action(qtable, board, piece, epsilon):
     valid_locations = get_valid_locations(board)
     max_q_value = float('-inf')
@@ -426,7 +426,6 @@ def choose_best_action(qtable, board, piece, epsilon):
             best_action = col
 
     return best_action
-
 
 def get_valid_locations(board):
     valid_locations = []
@@ -473,8 +472,6 @@ def plot_learning_curves(training_rewards, validation_rewards):
     plt.legend()
     # plt.show()
     plt.savefig('training vs validation')
-
-# plot_learning_curves(training_rewards, validation_rewards)
 
 def player_vs_bot():
     pygame.display.set_caption('ConnectFour-Player vs Bot')
@@ -660,7 +657,7 @@ def minimax_vs_minimax():
         if game_over:
             pygame.time.wait(3000)
 
-def player_vs_qlearning(episode = 5000, qtable_file='qtable.pkl'):
+def player_vs_qlearning(episode = 1000, qtable_file='qtable.pkl'):
     pygame.display.set_caption('ConnectFour-Player vs Q-Learning')
     board = create_board()
     print_board(board)
@@ -795,9 +792,179 @@ def bot_vs_minimax(board):
         if game_over:
             pygame.time.wait(3000)
 
+def bot_vs_qlearning(board, episode = 1000, qtable_file='qtable.pkl'):
+    pygame.display.set_caption('ConnectFour-Bot vs QLearning')
+    game_over = False
+
+    pygame.init()
+
+    screen = pygame.display.set_mode(size)
+    draw_board(board)
+    pygame.display.update()
+
+    myfont = pygame.font.SysFont("monospace", 25, bold= True)
+    BOT = 0
+    ALGO = 1
+
+    turn = random.randint(BOT, ALGO)
+
+    # Load or train the Q-table
+    path = "Implementing-AI-Algorithms-Part2\connect4\\"
+    if os.path.isfile(path + qtable_file):
+        with open(path + qtable_file, 'rb') as f:
+            qtable = pickle.load(f)
+    else:
+        qtable, training_rewards, validation_rewards = qlearning(board, episode)
+        # plot_learning_curves(training_rewards, validation_rewards)
+        with open(os.path.join(path, qtable_file), 'wb') as f:
+            pickle.dump(qtable, f)
+
+    while not game_over:
+        if turn == BOT and not game_over:
+            # col = get_bot_move(board, PLAYER_PIECE)
+            col = choose_best_action(qtable, board, PLAYER_PIECE, epsilon = 0.3)
+            if is_valid_location(board, col):
+                pygame.time.wait(500)
+                row = get_next_open_row(board, col)
+                drop_piece(board, row, col, PLAYER_PIECE)
+
+                if winning_move(board, PLAYER_PIECE):
+                    label = myfont.render("Q-Learning wins!!", 1, YELLOW)
+                    screen.blit(label, (40, 10))
+                    game_over = True
+
+                draw_board(board)
+
+                turn += 1
+                turn = turn % 2
+
+        if turn == ALGO and not game_over:
+            # col, minimax_score = minimax(board, 5, -math.inf, math.inf, True)
+            col = get_bot_move(board, AI_PIECE)
+            if is_valid_location(board, col):
+                pygame.time.wait(500)
+                row = get_next_open_row(board, col)
+                drop_piece(board, row, col, AI_PIECE)
+
+                if winning_move(board, AI_PIECE):
+                    label = myfont.render("Bot wins!!", 1, YELLOW)
+                    screen.blit(label, (40, 10))
+                    game_over = True
+
+                draw_board(board)
+
+                turn += 1
+                turn = turn % 2
+
+        if game_over:
+            pygame.time.wait(3000)
+
+def minimax_vs_qlearning(board, episode = 1000, qtable_file='qtable.pkl'):
+    pygame.display.set_caption('ConnectFour-Minimax vs QLearning')
+    game_over = False
+
+    pygame.init()
+
+    screen = pygame.display.set_mode(size)
+    draw_board(board)
+    pygame.display.update()
+
+    myfont = pygame.font.SysFont("monospace", 25, bold= True)
+    BOT = 0
+    ALGO = 1
+
+    turn = random.randint(BOT, ALGO)
+
+    # Load or train the Q-table
+    path = "Implementing-AI-Algorithms-Part2\connect4\\"
+    if os.path.isfile(path + qtable_file):
+        with open(path + qtable_file, 'rb') as f:
+            qtable = pickle.load(f)
+    else:
+        qtable, training_rewards, validation_rewards = qlearning(board, episode)
+        # plot_learning_curves(training_rewards, validation_rewards)
+        with open(os.path.join(path, qtable_file), 'wb') as f:
+            pickle.dump(qtable, f)
+
+    while not game_over:
+        if turn == BOT and not game_over:
+            # col = get_bot_move(board, PLAYER_PIECE)
+            col = choose_best_action(qtable, board, PLAYER_PIECE, epsilon = 0.3)
+            if is_valid_location(board, col):
+                pygame.time.wait(500)
+                row = get_next_open_row(board, col)
+                drop_piece(board, row, col, PLAYER_PIECE)
+
+                if winning_move(board, PLAYER_PIECE):
+                    label = myfont.render("Q-Learning wins!!", 1, YELLOW)
+                    screen.blit(label, (40, 10))
+                    game_over = True
+
+                draw_board(board)
+
+                turn += 1
+                turn = turn % 2
+
+        if turn == ALGO and not game_over:
+            col, minimax_score = minimax(board, 5, -math.inf, math.inf, True)
+            # col = get_bot_move(board, AI_PIECE)
+            if is_valid_location(board, col):
+                pygame.time.wait(500)
+                row = get_next_open_row(board, col)
+                drop_piece(board, row, col, AI_PIECE)
+
+                if winning_move(board, AI_PIECE):
+                    label = myfont.render("Minimax wins!!", 1, YELLOW)
+                    screen.blit(label, (40, 10))
+                    game_over = True
+
+                draw_board(board)
+
+                turn += 1
+                turn = turn % 2
+
+        if game_over:
+            pygame.time.wait(3000)
+
+def get_winner():
+    if winning_move(board, AI_PIECE):
+        return "algo"
+    elif winning_move(board, PLAYER_PIECE):
+        return "bot"
+    else:
+        return "draw"  
+def plot_results(results):
+    bot_wins = results.count("bot")
+    algo_wins = results.count("algo")
+    draws = results.count("draw")
+
+    labels = ["Q-Learning", "Minimax", "Draw"]
+    values = [bot_wins, algo_wins, draws]
+
+    plt.bar(labels, values)
+    plt.xlabel("Outcome")
+    plt.ylabel("Number of games")
+    plt.title("Q-Learning vs Minimax Game results")
+    plt.show()
+
 if __name__ == '__main__':
-    board = create_board()
+    num_games = 1
+    results = [] 
+    # board = create_board()
     # player_vs_bot()
     # player_vs_minimax()
-    player_vs_qlearning()
-    # bot_vs_minimax(board)
+    # player_vs_qlearning()
+    for game_number in range(num_games):
+        board = create_board()
+        print(f"Starting game {game_number + 1}")
+        minimax_vs_qlearning(board, episode = 5000, qtable_file='qtable-minimax1.pkl')
+        # bot_vs_qlearning(board,episode = 1000, qtable_file='qtable5.pkl')
+        # bot_vs_minimax(board)
+        game_result = get_winner()
+        results.append(game_result)
+
+    # Print and plot the results
+    print("Results:", results)
+    # plot_results(results)
+
+#alpha=0.4, gamma=0.7, epsilon=0.5
