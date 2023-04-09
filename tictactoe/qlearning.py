@@ -43,7 +43,7 @@ def validate_agent(q_agent, game_class, num_validation_games):
     return win_rate
 
 class QLearningAgent:
-    def __init__(self, alpha=0.5, gamma=0.9, epsilon=0.1):
+    def __init__(self, alpha=0.3, gamma=0.7, epsilon=0.4):
         # self.q_table = {}
         self.q_table = defaultdict(lambda: np.zeros(9))
         self.epsilon = epsilon
@@ -85,10 +85,6 @@ class QLearningAgent:
             best_actions = [action for action, q_value in q_values.items() if q_value == max_q_value]
             action = np.random.choice(best_actions)
         return action
-    
-###########################
-###########################
-###########################
 
     def train_q_learning_agent(self, game_class, num_episodes, q_table_file):
         player1_wins = 0
@@ -138,10 +134,6 @@ class QLearningAgent:
                 player1_wins = 0
                 player2_wins = 0
         self.save_q_table(q_table_file)
-    
-###########################
-###########################
-###########################
 
     def train_q_learning_bot(self, game_class, num_episodes, q_table_file):
         player1_wins = 0
@@ -203,10 +195,6 @@ class QLearningAgent:
         # game.reset_game()
         # pygame.display.update()
 
-###########################
-###########################
-###########################
-
     def save_q_table(self, filename):
         with open(filename, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
@@ -223,19 +211,3 @@ class QLearningAgent:
                 state = tuple(map(int, row[0][1:-1].split(',')))  # Add a space after the comma
                 q_values = np.array(list(map(float, row[1:])))
                 self.q_table[state] = q_values
-
-    # # Save Q-table
-    # def save_q_table(self, q_table_file):
-    #     with open(q_table_file, 'w', newline='') as csvfile:
-    #         writer = csv.writer(csvfile)
-    #         for state, actions in self.q_table.items():
-    #             writer.writerow([state] + actions.tolist())
-
-    # # Load Q-table
-    # def load_q_table(self, q_table_file):
-    #     with open(q_table_file, 'r') as csvfile:
-    #         reader = csv.reader(csvfile)
-    #         for row in reader:
-    #             state = tuple(map(int, row[0][1:-1].split(',')))
-    #             actions = np.array(list(map(float, row[1:])))
-    #             self.q_table[state] = actions
